@@ -49,7 +49,7 @@ if (isset($_POST['register'])) {
     // Profile Picture Upload
     $profile_picture = "img/default_pp.png";
     if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = 'img/uploads/';
+        $uploadDir = 'img/userProfilePicture/';
         $fileName = uniqid() . '_' . basename($_FILES['profile_picture']['name']);
         $targetPath = $uploadDir . $fileName;
 
@@ -65,7 +65,7 @@ if (isset($_POST['register'])) {
     // Hash password
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    // Cek username/email
+    // Username/email check
     $check = $conn->prepare("SELECT * FROM users WHERE username_user = ? OR email_user = ?");
     $check->bind_param("ss", $username, $email);
     $check->execute();
@@ -78,7 +78,7 @@ if (isset($_POST['register'])) {
         $stmt->bind_param("sssssssii", $username, $password_hash, $email, $name, $address, $profile_picture, $bio, $field_id, $education_id);
 
         if ($stmt->execute()) {
-            // Login otomatis setelah register
+            // Automatic login after register
             $_SESSION['user_id'] = $stmt->insert_id;
             $_SESSION['username'] = $username;
             header("Location: loading.php");
@@ -89,7 +89,7 @@ if (isset($_POST['register'])) {
     }
 }
 
-// Ambil data dropdown
+// Dropdown data
 $fields = mysqli_query($conn, "SELECT * FROM fields");
 $education_levels = mysqli_query($conn, "SELECT * FROM education_levels");
 ?>
@@ -114,10 +114,10 @@ $education_levels = mysqli_query($conn, "SELECT * FROM education_levels");
 </head>
 
 <body class="bg-amber-50 min-h-screen flex flex-col items-center justify-center">
-    <!-- Logo Besar di Atas -->
+    <!-- Logo -->
     <img src="img/ployeeOrange.png" alt="Logo Besar" class="h-32 mb-6">
 
-    <!-- Box Login/Register -->
+    <!-- Login/Register Box -->
     <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-lg">
         <div class="flex justify-around mb-4">
             <button id="btn-login" class="text-amber-600 font-bold">Login</button>

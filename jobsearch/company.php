@@ -9,21 +9,20 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 include 'controller.php';
-$conn = my_connectDB();
 
+// READ user + field
 $userId = $_SESSION['user_id'];
-$stmt = $conn->prepare("
-    SELECT u.*, f.field_name 
-    FROM users u 
-    LEFT JOIN fields f ON u.field_id = f.field_id 
-    WHERE u.user_id = ?
-");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$user = getUserWithField($userId);
 
-$conn->close();
+// Placeholder untuk data perusahaan, nantinya bisa diambil dari database
+$companies = [
+    ['name' => 'Tech Solutions Inc.', 'description' => 'Inovasi teknologi untuk masa depan.', 'logo' => 'img/company/logo1.png'],
+    ['name' => 'Creative Minds Agency', 'description' => 'Agensi kreatif dengan ide-ide brilian.', 'logo' => 'img/company/logo2.png'],
+    ['name' => 'GreenLeaf Corp.', 'description' => 'Berkomitmen pada solusi ramah lingkungan.', 'logo' => 'img/company/logo3.png'],
+    ['name' => 'Nexus Innovations', 'description' => 'Menghubungkan ide dengan realita.', 'logo' => 'img/company/logo4.png'],
+    ['name' => 'Quantum Dynamics', 'description' => 'Pionir dalam riset dan pengembangan.', 'logo' => 'img/company/logo5.png'],
+    ['name' => 'Apex Group', 'description' => 'Mencapai puncak kesuksesan bersama.', 'logo' => 'img/company/logo6.png'],
+];
 
 ?>
 
@@ -197,134 +196,39 @@ $conn->close();
     <!-- Main Content -->
     <main class="min-h-screen pl-4 pr-4 sm:pl-8 sm:pr-8 lg:pl-24 pt-[80px] lg:pt-8 pb-16 space-y-6 max-w-7xl mx-auto">
 
-        <!-- Header Page -->
-        <div class="text-center">
-            <img src="img/ployeeOrange.png" class="h-20 w-auto mx-auto mb-2" alt="Logo" />
-            <p class="text-sm text-gray-600 font-medium">– To Start with A Simple One –</p>
-            <div class="h-[4px] w-full bg-amber-500 rounded-full mx-auto mt-2 mb-4"></div>
-        </div>
-
-        <!-- Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-6">
-
-            <!-- Side Profile -->
-            <aside class="order-1 lg:order-2 bg-white border border-gray-200 rounded-xl shadow-sm p-4 lg:sticky top-6 h-fit lg:transform lg:translate-x-6">
-                <div class="flex flex-col items-center text-center">
-                    <img src="<?= htmlspecialchars($user['profile_picture_link_user'] ?? 'img/default_pp.png') ?>" alt="profile" class="w-16 h-16 rounded-full mb-3 object-cover" />
-                    <h2 class="font-semibold text-lg">
-                        <?= htmlspecialchars($user['name_user']) ?>
-                    </h2>
-                    <p class="text-gray-500 text-sm mb-2">
-                        <?= htmlspecialchars($user['field_name']) ?>
-                    </p>
-                    <p class="text-gray-700 text-sm mb-1 text-center break-words">
-                        <?= htmlspecialchars($user['username_user']) ?>
-                    </p>
-                    <p class="text-gray-700 text-sm mb-4">
-                        <?= htmlspecialchars($user['location_user']) ?>
-                    </p>
-                    <a href="profile.php" class="block w-full bg-amber-500 text-white py-2 rounded hover:bg-amber-600 transition duration-300 ease-in-out text-sm">Edit Profile</a>
+        <!-- Header Content -->
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+            <h1 class="text-3xl font-bold text-gray-800">
+                Company
+            </h1>
+            <div class="flex items-center w-full md:w-auto gap-4">
+                <div class="relative flex-grow w-full md:w-64">
+                    <input type="text" placeholder="Search for company..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
                 </div>
-            </aside>
-
-            <!-- Main Feeds -->
-            <div class="order-2 lg:order-1 space-y-6">
-
-                <!-- Header Content -->
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <p class="text-amber-500 font-medium text-lg lg:text-xl px-6 py-1 leading-tight">
-                        Welcome to Ployee
-                    </p>
-
-
-                    <!-- See User's Apply -->
-                    <button class="bg-amber-500 text-white text-base font-medium px-6 py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 ease-in-out">
-                        Your Apply
-                    </button>
-                </div>
-
-                <!-- Form Post -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=You" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <textarea placeholder="What's on your mind?" class="w-full p-2 border border-gray-300 rounded text-sm resize-none"></textarea>
-                            <div class="flex justify-between items-center mt-2">
-                                <label class="text-sm text-blue-600 cursor-pointer hover:underline">
-                                    📷 Add Photo
-                                    <input type="file" class="hidden" />
-                                </label>
-                                <button class="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">Post</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Show Posts -->
-
-                <!-- Post 1 -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=John+Doe" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <h4 class="font-semibold">John Doe</h4>
-                            <p class="text-sm text-gray-500">Product Manager • 2h</p>
-                            <p class="mt-2 text-sm text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Post 2 -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=Katie+Kaus" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <h4 class="font-semibold">Katie Kaus</h4>
-                            <p class="text-sm text-gray-500">Head Coach at Nike • 1hr</p>
-                            <p class="mt-2 text-sm">Obsessed with the games on LinkedIn...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Post 3 -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=John+Doe" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <h4 class="font-semibold">John Doe</h4>
-                            <p class="text-sm text-gray-500">Product Manager • 2h</p>
-                            <p class="mt-2 text-sm text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Post 4 -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=Katie+Kaus" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <h4 class="font-semibold">Katie Kaus</h4>
-                            <p class="text-sm text-gray-500">Head Coach at Nike • 1hr</p>
-                            <p class="mt-2 text-sm">Obsessed with the games on LinkedIn...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Post 5 -->
-                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm space-y-4">
-                    <div class="flex items-start space-x-4">
-                        <img src="https://ui-avatars.com/api/?name=John+Doe" alt="avatar" class="w-10 h-10 rounded-full" />
-                        <div class="flex-1">
-                            <h4 class="font-semibold">John Doe</h4>
-                            <p class="text-sm text-gray-500">Product Manager • 2h</p>
-                            <p class="mt-2 text-sm text-gray-700">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-                        </div>
-                    </div>
-                </div>
-
+                <button class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300">
+                    Create Company
+                </button>
             </div>
-
         </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php foreach ($companies as $company): ?>
+                <div class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-xl">
+                    <img src="<?= htmlspecialchars($company['logo']) ?>" alt="<?= htmlspecialchars($company['name']) ?>" class="w-20 h-20 rounded-full mb-4 object-contain border-2 border-gray-200">
+                    <h3 class="text-xl font-semibold text-gray-800"><?= htmlspecialchars($company['name']) ?></h3>
+                    <p class="text-gray-500 text-sm mt-2 flex-grow"><?= htmlspecialchars($company['description']) ?></p>
+                    <a href="#" class="mt-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-full transition duration-300">
+                        View Details
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        
     </main>
 
     <!-- Footer -->

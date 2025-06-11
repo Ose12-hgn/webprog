@@ -9,22 +9,43 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 include 'controller.php';
-$conn = my_connectDB();
 
+// READ user + field
 $userId = $_SESSION['user_id'];
-$stmt = $conn->prepare("
-    SELECT u.*, f.field_name 
-    FROM users u 
-    LEFT JOIN fields f ON u.field_id = f.field_id 
-    WHERE u.user_id = ?
-");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+$user = getUserWithField($userId);
 
-$conn->close();
+// Handle Profile Update
+if (isset($_POST['update_profile'])) {
+    // Handle file upload first
+    $profile_picture_path = handleFileUpload(
+        $_FILES['profile_picture'] ?? null,
+        $user['profile_picture_link_user']
+    );
 
+    if ($profile_picture_path === false) {
+        $error = "Failed to upload profile picture";
+    } else {
+        // Update profile after
+        $success = updateUserProfile(
+            $_SESSION['user_id'],
+            $_POST['username'],
+            $_POST['email'],
+            $_POST['password'],
+            $_POST['name'],
+            $profile_picture_path,
+            $_POST['bio'],
+            $_POST['field_id'] ?: null,
+            $_POST['education_id'] ?: null
+        );
+
+        if ($success) {
+            header("Location: profile.php?updated=true");
+            exit();
+        } else {
+            $error = "Gagal mengupdate profil";
+        }
+    }
+}
 ?>
 
 
@@ -196,101 +217,142 @@ $conn->close();
 
     <!-- Main Content -->
     <main class="min-h-screen pl-4 pr-4 sm:pl-8 sm:pr-8 lg:pl-24 pt-[80px] lg:pt-8 pb-16 space-y-6 max-w-7xl mx-auto">
-<section class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-md">
-  <h2 class="text-2xl font-semibold mb-6 text-center">Edit Profil</h2>
+        <!-- Update - Success/Failed -->
+        <?php if (isset($_GET['updated'])): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                <strong class="font-bold">Success!</strong>
+                <span class="block sm:inline"> Profile updated </span>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($error)): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline"> <?php echo $error; ?></span>
+            </div>
+        <?php endif; ?>
 
-  <?php if (!empty($success_message)): ?>
-    <div class="bg-green-100 text-green-800 p-3 rounded mb-4"><?= $success_message ?></div>
-  <?php endif; ?>
+        <!-- Headline -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">Profile</h1>
+            <div class="h-[4px] w-24 bg-amber-500 rounded-full"></div>
+        </div>
 
-  <form method="POST" enctype="multipart/form-data" class="space-y-6">
-    <!-- Username -->
-    <div>
-      <label class="block font-medium mb-1">Username</label>
-      <input type="text" name="username" value="<?= htmlspecialchars($user['username_user']) ?>" required class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-    </div>
+        <div class="flex flex-col lg:flex-row gap-12">
+            <!-- Form wrapper -->
+            <form method="POST" enctype="multipart/form-data" class="w-full flex flex-col lg:flex-row gap-12">
+                <!-- Left Column: Profile Picture -->
+                <div class="w-full lg:w-1/3">
+                    <div class="flex flex-col items-center">
+                        <img id="preview"
+                            src="<?php echo $user['profile_picture_link_user'] ?? 'img/userProfilePicture/default.jpeg'; ?>"
+                            alt="Profile Picture"
+                            class="w-44 h-44 object-cover rounded-full border mb-4">
+                        <label class="block font-medium mb-2">Change Profile Picture</label>
+                        <input type="file" name="profile_picture" accept="image/*" class="text-sm w-full max-w-[176px]">
+                    </div>
+                </div>
 
-    <!-- Email -->
-    <div>
-      <label class="block font-medium mb-1">Email</label>
-      <input type="email" name="email" value="<?= htmlspecialchars($user['email_user']) ?>" required class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-    </div>
+                <!-- Right Column: Form Fields -->
+                <div class="w-full lg:w-2/3 space-y-6">
+                    <!-- Username -->
+                    <div>
+                        <label class="block font-medium mb-1">Username</label>
+                        <input type="text" name="username"
+                            value="<?php echo htmlspecialchars($user['username_user']); ?>"
+                            placeholder="myusername" required
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                    </div>
 
-    <!-- Nama Lengkap -->
-    <div>
-      <label class="block font-medium mb-1">Nama Lengkap</label>
-      <input type="text" name="name" value="<?= htmlspecialchars($user['name_user']) ?>" required class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-    </div>
+                    <!-- Email -->
+                    <div>
+                        <label class="block font-medium mb-1">Email</label>
+                        <input type="email" name="email"
+                            value="<?php echo htmlspecialchars($user['email_user']); ?>"
+                            placeholder="mymail@example.com" required
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                    </div>
 
-    <!-- Ganti Password -->
-    <div>
-      <label class="block font-medium mb-1">Password Baru (kosongkan jika tidak ganti)</label>
-      <input type="password" name="password" placeholder="********" class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-    </div>
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block font-medium mb-1">Full Name</label>
+                        <input type="text" name="name"
+                            value="<?php echo htmlspecialchars($user['name_user']); ?>"
+                            placeholder="My Name" required
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                    </div>
 
-    <!-- Bio -->
-    <div>
-      <label class="block font-medium mb-1">Bio</label>
-      <textarea name="bio" rows="3" class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200"><?= htmlspecialchars($user['bio_user']) ?></textarea>
-    </div>
+                    <!-- Password -->
+                    <div>
+                        <label class="block font-medium mb-1">New Password (not required)</label>
+                        <input type="password" name="password"
+                            placeholder="********"
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                    </div>
 
-    <!-- Field Dropdown -->
-    <div>
-      <label class="block font-medium mb-1">Bidang</label>
-      <select name="field_id" class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-        <option value="">-- Pilih Bidang --</option>
-        <?php foreach ($fields as $field): ?>
-          <option value="<?= $field['id'] ?>" <?= ($field['id'] == $user['field_id']) ? 'selected' : '' ?>>
-            <?= htmlspecialchars($field['name']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-    </div>
+                    <!-- Bio -->
+                    <div>
+                        <label class="block font-medium mb-1">Bio</label>
+                        <textarea name="bio" rows="3"
+                            placeholder="I love using Ployee..."
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200"><?php echo htmlspecialchars($user['bio_user']); ?></textarea>
+                    </div>
 
-    <!-- Education Level Dropdown -->
-    <div>
-      <label class="block font-medium mb-1">Pendidikan</label>
-      <select name="education_id" class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
-        <option value="">-- Pilih Pendidikan --</option>
-        <?php foreach ($education_levels as $education): ?>
-          <option value="<?= $education['id'] ?>" <?= ($education['id'] == $user['education_id']) ? 'selected' : '' ?>>
-            <?= htmlspecialchars($education['name']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-    </div>
+                    <!-- Field -->
+                    <div>
+                        <label class="block font-medium mb-1">Field</label>
+                        <select name="field_id"
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                            <option value="">-- Choose Field --</option>
+                            <option value="1" <?php echo ($user['field_id'] == 1) ? 'selected' : ''; ?>>Technology</option>
+                            <option value="2" <?php echo ($user['field_id'] == 2) ? 'selected' : ''; ?>>Business</option>
+                        </select>
+                    </div>
 
-    <!-- Foto Profil -->
-    <div>
-      <label class="block font-medium mb-1">Foto Profil</label>
-      <div class="flex items-center gap-4">
-        <img id="preview" src="<?= htmlspecialchars($user['profile_picture_link_user']) ?>" alt="Profile Picture" class="w-20 h-20 object-cover rounded-full border">
-        <input type="file" name="profile_picture" accept="image/*" class="block mt-2">
-      </div>
-    </div>
+                    <!-- Education -->
+                    <div>
+                        <label class="block font-medium mb-1">Highest Education</label>
+                        <select name="education_id"
+                            class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
+                            <option value="">-- Choose Highest Education --</option>
+                            <option value="1" <?php echo ($user['education_id'] == 1) ? 'selected' : ''; ?>>High School</option>
+                            <option value="2" <?php echo ($user['education_id'] == 2) ? 'selected' : ''; ?>>Bachelor Degree</option>
+                        </select>
+                    </div>
 
-    <!-- Submit -->
-    <div class="pt-4">
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow">
-        Simpan Perubahan
-      </button>
-    </div>
-  </form>
-</section>
+                    <!-- Button Group -->
+                    <div class="space-y-4 pt-4">
+                        <!-- Save Button -->
+                        <button type="submit" name="update_profile"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow">
+                            Save Changes
+                        </button>
 
-<!-- Preview Foto Profil -->
-<script>
-  const input = document.querySelector('input[name="profile_picture"]');
-  const preview = document.getElementById('preview');
+                        <!-- Delete Account -->
+                        <div class="text-right">
+                            <button type="button" id="delete-account-button"
+                                class="text-red-600 hover:underline font-medium">
+                                Delete Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-  input?.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      preview.src = URL.createObjectURL(file);
-    }
-  });
-</script>
-
+        <!-- Delete Account Modal -->
+        <div id="delete-account-box" class="fixed inset-0 z-[999] hidden bg-black bg-opacity-40 flex items-center justify-center px-4">
+            <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md space-y-4">
+                <h3 class="text-xl font-semibold text-red-600">Konfirmasi Hapus Akun</h3>
+                <p class="text-gray-700">Apakah kamu yakin ingin menghapus akunmu? Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="flex justify-end gap-3">
+                    <button id="cancel-delete" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
+                    <form method="POST">
+                        <button name="delete_account" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Hapus</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
     </main>
 
     <!-- Footer -->

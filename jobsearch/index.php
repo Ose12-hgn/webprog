@@ -9,24 +9,12 @@ if (!isset($_SESSION["user_id"])) {
 }
 
 include 'controller.php';
-$conn = my_connectDB();
 
+// READ user + field
 $userId = $_SESSION['user_id'];
-$stmt = $conn->prepare("
-    SELECT u.*, f.field_name 
-    FROM users u 
-    LEFT JOIN fields f ON u.field_id = f.field_id 
-    WHERE u.user_id = ?
-");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-
-$conn->close();
+$user = getUserWithField($userId);
 
 ?>
-
 
 <!DOCTYPE html>
 <html class="scroll-smooth">

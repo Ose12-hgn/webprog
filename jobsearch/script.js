@@ -54,13 +54,11 @@ $(document).ready(function () {
 
     // Logout Button Clicked (desktop)
     $('#logout-button').click(function (e) {
-        e.preventDefault();
         $('#logout-box').removeClass('hidden');
     });
 
     // Logout Button Clicked (mobile)
     $('#logout-button-mobile').click(function (e) {
-        e.preventDefault();
         $('#logout-box').removeClass('hidden');
     });
 
@@ -72,6 +70,32 @@ $(document).ready(function () {
     // Cancel Logout Outside Clicked
     $('#logout-box').click(function (e) {
         if (e.target.id === 'logout-box') {
+            $(this).addClass('hidden');
+        }
+    });
+
+    // profile.php Profile Picture Preview
+    const input = document.querySelector('input[name="profile_picture"]');
+    const preview = document.getElementById('preview');
+
+    input?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+        }
+    });
+
+    // profile.php Delete Account Confirmation
+    $('#delete-account-button').click(function (e) {
+        $('#delete-account-box').removeClass('hidden');
+    });
+
+    $('#cancel-delete').click(function () {
+        $('#delete-account-box').addClass('hidden');
+    });
+
+    $('#delete-account-box').click(function (e) {
+        if (e.target.id === 'delete-account-box') {
             $(this).addClass('hidden');
         }
     });
