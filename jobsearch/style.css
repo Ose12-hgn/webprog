@@ -1,0 +1,52 @@
+/* MARIO RUBY ARIESUSANDI / NIM 0706012410028 / CLASS WEB PROGRAMMING B */
+/* FILEMON JOSE HAGEN / NIM 0706012410016 / CLASS WEB PROGRAMMING B */
+
+/* Jost font override */
+.font-jost {
+    font-family: 'Jost', sans-serif;
+}
+
+/* Custom font family */
+body {
+    font-family: 'Jost', sans-serif;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+#mobile-fullmenu {
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+#mobile-fullmenu.show {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+}
+
+.slide-down {
+    transform: translateY(-10%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-down-active {
+    transform: translateY(0);
+    opacity: 1;
+}
