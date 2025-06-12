@@ -5,73 +5,28 @@ if (!isset($_SESSION["user_id"])) {
     exit();
 }
 
-include 'controller.php';
-$conn = my_connectDB();
+require_once 'controller.php';
 
-// Mengambil data user yang sedang login
-$userId = $_SESSION['user_id'];
-$stmt = $conn->prepare("
-    SELECT u.*, f.field_name
-    FROM users u
-    LEFT JOIN fields f ON u.field_id = f.field_id
-    WHERE u.user_id = ?
-");
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+// Handle job application
+if (isset($_POST['apply']) && isset($_POST['job_id'])) {
+    $jobId = $_POST['job_id'];
+    $userId = $_SESSION['user_id'];
 
-// Placeholder untuk data pekerjaan, nantinya bisa diambil dari database
-$jobs = [
-    [
-        'title' => 'Frontend Developer',
-        'company_name' => 'Tech Solutions Inc.',
-        'location' => 'Jakarta, Indonesia',
-        'type' => 'Full-time',
-        'logo' => 'img/company/logo1.png'
-    ],
-    [
-        'title' => 'UI/UX Designer',
-        'company_name' => 'Creative Minds Agency',
-        'location' => 'Surabaya, Indonesia',
-        'type' => 'Internship',
-        'logo' => 'img/company/logo2.png'
-    ],
-    [
-        'title' => 'Environmental Analyst',
-        'company_name' => 'GreenLeaf Corp.',
-        'location' => 'Bandung, Indonesia',
-        'type' => 'Full-time',
-        'logo' => 'img/company/logo3.png'
-    ],
-    [
-        'title' => 'Backend Engineer',
-        'company_name' => 'Nexus Innovations',
-        'location' => 'Yogyakarta, Indonesia',
-        'type' => 'Remote',
-        'logo' => 'img/company/logo4.png'
-    ],
-    [
-        'title' => 'Data Scientist',
-        'company_name' => 'Quantum Dynamics',
-        'location' => 'Jakarta, Indonesia',
-        'type' => 'Full-time',
-        'logo' => 'img/company/logo5.png'
-    ],
-    [
-        'title' => 'Marketing Manager',
-        'company_name' => 'Apex Group',
-        'location' => 'Surabaya, Indonesia',
-        'type' => 'Full-time',
-        'logo' => 'img/company/logo6.png'
-    ],
-];
+    if (applyForJob($userId, $jobId)) {
+        $successMessage = "Application submitted successfully!";
+    } else {
+        $error = "You have already applied for this job or an error occurred.";
+    }
+}
 
-
-$conn->close();
-
+// Get all jobs
+try {
+    $jobs = getAllJobPostingsWithCompany();
+} catch (Exception $e) {
+    $error = "Failed to load jobs";
+    $jobs = [];
+}
 ?>
-
 
 <!DOCTYPE html>
 <html class="scroll-smooth">
@@ -225,38 +180,44 @@ $conn->close();
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($jobs as $job): ?>
-                <div class="bg-white rounded-xl shadow-md p-5 flex flex-col transition transform hover:-translate-y-1 hover:shadow-xl cursor-pointer">
-                    <div class="flex items-start mb-4">
-                        <img src="<?= htmlspecialchars($job['logo']) ?>" alt="<?= htmlspecialchars($job['company_name']) ?>" class="w-14 h-14 rounded-lg mr-4 object-contain">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900"><?= htmlspecialchars($job['title']) ?></h3>
-                            <p class="text-md text-gray-600"><?= htmlspecialchars($job['company_name']) ?></p>
+            <?php if (isset($successMessage)): ?>
+                <div class="col-span-full bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    <?= htmlspecialchars($successMessage) ?>
+                </div>
+            <?php endif; ?>
+            <?php if (isset($error)): ?>
+                <div class="col-span-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <?= htmlspecialchars($error) ?>
+                </div>
+            <?php else: ?>
+                <?php foreach ($jobs as $job): ?>
+                    <div class="bg-white rounded-xl shadow-md p-5 mb-4">
+                        <div class="flex items-center gap-4 mb-2">
+                            <img src="<?= htmlspecialchars($job['profile_picture_link_company']) ?>"
+                                class="w-12 h-12 rounded-full object-cover" alt="Company Logo">
+                            <div>
+                                <h2 class="text-xl font-semibold"><?= htmlspecialchars($job['title_job_posting']) ?></h2>
+                                <p class="text-gray-500"><?= htmlspecialchars($job['name_company']) ?> • <?= htmlspecialchars($job['location_job_posting']) ?></p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <p>Salary: <?= htmlspecialchars($job['salary_range_job_posting']) ?> | Type: <?= htmlspecialchars($job['type_job_posting']) ?></p>
+                            <p class="text-xs text-gray-400">Posted on <?= date('d M Y', strtotime($job['date_posted_job_posting'])) ?></p>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <form method="POST">
+                                <input type="hidden" name="job_id" value="<?= $job['job_posting_id'] ?>">
+                                <button type="submit" name="apply"
+                                    class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition">
+                                    Apply Now
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    <div class="flex items-center text-sm text-gray-500 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                        </svg>
-                        <?= htmlspecialchars($job['location']) ?>
-                    </div>
-                    <div class="flex-grow"></div>
-                    <div class="mt-2">
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full 
-                            <?php 
-                                switch(strtolower($job['type'])) {
-                                    case 'full-time': echo 'bg-blue-100 text-blue-800'; break;
-                                    case 'internship': echo 'bg-green-100 text-green-800'; break;
-                                    case 'remote': echo 'bg-purple-100 text-purple-800'; break;
-                                    default: echo 'bg-gray-100 text-gray-800'; break;
-                                }
-                            ?>">
-                            <?= htmlspecialchars($job['type']) ?>
-                        </span>
-                    </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+
     </main>
 
     <footer class="bg-white border-t border-gray-200 px-8 py-6 text-black mt-auto">
@@ -283,4 +244,5 @@ $conn->close();
         </div>
     </footer>
 </body>
+
 </html>

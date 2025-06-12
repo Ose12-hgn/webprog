@@ -3,8 +3,17 @@
 
 <?php
 if (isset($_GET['logout'])) {
+    // Clear variables
+    unset($_SESSION['user_id']);
+    unset($_SESSION['username']);
+    unset($_SESSION['company_id']);
+    unset($_SESSION['company_name']);
+    
+    // Destroy session
     session_destroy();
-    header("Location: auth.php"); // Atau bisa redirect ke halaman lain kalau mau
+    
+    // Redirect
+    header("Location: auth.php");
     exit;
 }
 
@@ -72,7 +81,7 @@ if (isset($_POST['register'])) {
     $result = $check->get_result();
 
     if ($result->num_rows > 0) {
-        $error = "Username atau Email sudah digunakan.";
+        $error = "Username or Email already exists!";
     } else {
         $stmt = $conn->prepare("INSERT INTO users (username_user, password_hash_user, email_user, name_user, address_user, profile_picture_link_user, bio_user, field_id, education_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssssii", $username, $password_hash, $email, $name, $address, $profile_picture, $bio, $field_id, $education_id);
@@ -84,7 +93,7 @@ if (isset($_POST['register'])) {
             header("Location: loading.php");
             exit;
         } else {
-            $error = "Gagal mendaftarkan user: " . $conn->error;
+            $error = "Failed to register user: " . $conn->error;
         }
     }
 }

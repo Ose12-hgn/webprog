@@ -14,16 +14,8 @@ include 'controller.php';
 $userId = $_SESSION['user_id'];
 $user = getUserWithField($userId);
 
-// Placeholder untuk data perusahaan, nantinya bisa diambil dari database
-$companies = [
-    ['name' => 'Tech Solutions Inc.', 'description' => 'Inovasi teknologi untuk masa depan.', 'logo' => 'img/company/logo1.png'],
-    ['name' => 'Creative Minds Agency', 'description' => 'Agensi kreatif dengan ide-ide brilian.', 'logo' => 'img/company/logo2.png'],
-    ['name' => 'GreenLeaf Corp.', 'description' => 'Berkomitmen pada solusi ramah lingkungan.', 'logo' => 'img/company/logo3.png'],
-    ['name' => 'Nexus Innovations', 'description' => 'Menghubungkan ide dengan realita.', 'logo' => 'img/company/logo4.png'],
-    ['name' => 'Quantum Dynamics', 'description' => 'Pionir dalam riset dan pengembangan.', 'logo' => 'img/company/logo5.png'],
-    ['name' => 'Apex Group', 'description' => 'Mencapai puncak kesuksesan bersama.', 'logo' => 'img/company/logo6.png'],
-];
-
+// Get companies from database
+$companies = getAllCompanies();
 ?>
 
 
@@ -197,38 +189,64 @@ $companies = [
     <main class="min-h-screen pl-4 pr-4 sm:pl-8 sm:pr-8 lg:pl-24 pt-[80px] lg:pt-8 pb-16 space-y-6 max-w-7xl mx-auto">
 
         <!-- Header Content -->
-        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-            <h1 class="text-3xl font-bold text-gray-800">
-                Company
-            </h1>
-            <div class="flex items-center w-full md:w-auto gap-4">
-                <div class="relative flex-grow w-full md:w-64">
-                    <input type="text" placeholder="Search for company..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                        </svg>
-                    </span>
-                </div>
-                <button class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300">
+        <div class="flex items-center justify-between mb-4">
+
+            <!-- Headline -->
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold mb-2">Company</h1>
+                <div class="h-[4px] w-[136px] bg-amber-500 rounded-full"></div>
+            </div>
+
+            <div class="flex gap-4">
+                <a href="loginCompany.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-full transition duration-300">
+                    Login as Company
+                </a>
+                <a href="createCompany.php" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-full shadow-md transition duration-300">
                     Create Company
-                </button>
+                </a>
+
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($companies as $company): ?>
-                <div class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-xl">
-                    <img src="<?= htmlspecialchars($company['logo']) ?>" alt="<?= htmlspecialchars($company['name']) ?>" class="w-20 h-20 rounded-full mb-4 object-contain border-2 border-gray-200">
-                    <h3 class="text-xl font-semibold text-gray-800"><?= htmlspecialchars($company['name']) ?></h3>
-                    <p class="text-gray-500 text-sm mt-2 flex-grow"><?= htmlspecialchars($company['description']) ?></p>
-                    <a href="#" class="mt-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-full transition duration-300">
-                        View Details
-                    </a>
-                </div>
-            <?php endforeach; ?>
+
+        <!-- Search Bar -->
+        <div class="flex justify-center mb-10">
+            <div class="relative w-full max-w-xl">
+                <input type="text" placeholder="Search for company..."
+                    class="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <img src="img/searchBarIcon.svg" alt="Search" class="h-6 w-6">
+                </span>
+            </div>
         </div>
-        
+
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php if (empty($companies)): ?>
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    No companies found.
+                </div>
+            <?php else: ?>
+                <?php foreach ($companies as $company): ?>
+                    <div class="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center text-center transition transform hover:-translate-y-1 hover:shadow-xl">
+                        <img src="<?= htmlspecialchars($company['profile_picture_link_company']) ?>"
+                            alt="<?= htmlspecialchars($company['name_company']) ?>"
+                            class="w-20 h-20 rounded-full mb-4 object-contain border-2 border-gray-200">
+                        <h3 class="text-xl font-semibold text-gray-800">
+                            <?= htmlspecialchars($company['name_company']) ?>
+                        </h3>
+                        <p class="text-gray-500 text-sm mt-2 flex-grow">
+                            <?= htmlspecialchars($company['description_company']) ?>
+                        </p>
+                        <a href="companyDetail.php?id=<?= htmlspecialchars($company['company_id']) ?>"
+                            class="mt-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-6 rounded-full transition duration-300">
+                            View Details
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
     </main>
 
     <!-- Footer -->

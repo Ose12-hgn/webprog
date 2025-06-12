@@ -14,6 +14,10 @@ include 'controller.php';
 $userId = $_SESSION['user_id'];
 $user = getUserWithField($userId);
 
+// GET fields and edu levels
+$fields = getAllFields();
+$education_levels = getAllEducationLevels();
+
 // Handle Profile Update
 if (isset($_POST['update_profile'])) {
     // Handle file upload first
@@ -44,6 +48,18 @@ if (isset($_POST['update_profile'])) {
         } else {
             $error = "Gagal mengupdate profil";
         }
+    }
+}
+
+// Handle Delete Account
+if (isset($_POST['delete_account'])) {
+    $success = deleteUser($_SESSION['user_id']);
+    if ($success) {
+        session_destroy();
+        header("Location: auth.php");
+        exit();
+    } else {
+        $error = "Failed to delete account";
     }
 }
 ?>
@@ -303,8 +319,12 @@ if (isset($_POST['update_profile'])) {
                         <select name="field_id"
                             class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
                             <option value="">-- Choose Field --</option>
-                            <option value="1" <?php echo ($user['field_id'] == 1) ? 'selected' : ''; ?>>Technology</option>
-                            <option value="2" <?php echo ($user['field_id'] == 2) ? 'selected' : ''; ?>>Business</option>
+                            <?php foreach ($fields as $field): ?>
+                                <option value="<?= $field['field_id'] ?>"
+                                    <?php echo ($user['field_id'] == $field['field_id']) ? 'selected' : ''; ?>>
+                                    <?= htmlspecialchars($field['field_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -314,8 +334,12 @@ if (isset($_POST['update_profile'])) {
                         <select name="education_id"
                             class="w-full border px-4 py-2 rounded-lg focus:ring focus:ring-blue-200">
                             <option value="">-- Choose Highest Education --</option>
-                            <option value="1" <?php echo ($user['education_id'] == 1) ? 'selected' : ''; ?>>High School</option>
-                            <option value="2" <?php echo ($user['education_id'] == 2) ? 'selected' : ''; ?>>Bachelor Degree</option>
+                            <?php foreach ($education_levels as $edu): ?>
+                                <option value="<?= $edu['education_id'] ?>"
+                                    <?php echo ($user['education_id'] == $edu['education_id']) ? 'selected' : ''; ?>>
+                                    <?= htmlspecialchars($edu['education_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -340,19 +364,19 @@ if (isset($_POST['update_profile'])) {
         </div>
 
         <!-- Delete Account Modal -->
-        <div id="delete-account-box" class="fixed inset-0 z-[999] hidden bg-black bg-opacity-40 flex items-center justify-center px-4">
-            <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md space-y-4">
-                <h3 class="text-xl font-semibold text-red-600">Konfirmasi Hapus Akun</h3>
-                <p class="text-gray-700">Apakah kamu yakin ingin menghapus akunmu? Tindakan ini tidak dapat dibatalkan.</p>
+        <div id="delete-account-box" class="fixed top-0 left-0 right-0 bottom-0 z-[999] hidden bg-black bg-opacity-40 flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-md space-y-4 m-4">
+                <h3 class="text-xl font-semibold text-red-600">Confirm Delete Account</h3>
+                <p class="text-gray-700">Are you sure you want to delete your account? This action cannot be undone.</p>
                 <div class="flex justify-end gap-3">
-                    <button id="cancel-delete" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
-                    <form method="POST">
-                        <button name="delete_account" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Hapus</button>
+                    <button id="cancel-delete" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <form method="POST" class="inline">
+                        <button type="submit" name="delete_account" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
                     </form>
                 </div>
             </div>
         </div>
-        
+
     </main>
 
     <!-- Footer -->

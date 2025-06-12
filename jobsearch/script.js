@@ -99,4 +99,20 @@ $(document).ready(function () {
             $(this).addClass('hidden');
         }
     });
+
+    // Logout button handlers
+    $('#logout-button, #logout-button-mobile').click(function() {
+        $('#logout-box').removeClass('hidden');
+    });
+
+    $('#cancel-logout').click(function() {
+        $('#logout-box').addClass('hidden');
+    });
+
+    // Close modal when clicking outside
+    $('#logout-box').click(function(e) {
+        if (e.target.id === 'logout-box') {
+            $(this).addClass('hidden');
+        }
+    });
 });
